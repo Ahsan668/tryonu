@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "974273307729",
+    "project_id": "tryonu-743a0",
+    "storage_bucket": "tryonu-743a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974273307729:android:6975f91976aa0b167a4470",
+        "android_client_info": {
+          "package_name": "com.example.tryonu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "974273307729-tejtlsfr30i2v1aofcirk0fag4ibm3no.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3JAN8KiFfw8-JN7c7mrEblAcKiQARmsU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "974273307729-tejtlsfr30i2v1aofcirk0fag4ibm3no.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "974273307729-18dkvel07kbuuq5h9sr02lkab6ehjemo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.tryonu"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
