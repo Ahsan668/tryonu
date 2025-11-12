@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/ai_tryon_repository.dart';
 import '../../data/repositories/clothing_repository.dart';
+import '../../data/services/huggingface_service.dart';
 import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../presentation/blocs/tryon/tryon_bloc.dart';
 import '../../presentation/blocs/clothing/clothing_bloc.dart';
@@ -24,6 +25,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   getIt.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
   getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+  getIt.registerLazySingleton<VirtualTryOnService>(() => VirtualTryOnService());
   
   // Repositories
   getIt.registerLazySingleton<AuthRepository>(
@@ -37,6 +39,8 @@ Future<void> setupServiceLocator() async {
     () => AiTryOnRepository(
       storage: getIt<FirebaseStorage>(),
       firestore: getIt<FirebaseFirestore>(),
+      clothingRepository: getIt<ClothingRepository>(),
+      virtualTryOnService: getIt<VirtualTryOnService>(),
     ),
   );
   

@@ -1,18 +1,29 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/try_on_result_model.dart';
+import '../models/clothing_item_model.dart';
+import '../repositories/clothing_repository.dart';
+import '../services/huggingface_service.dart';
 
 /// AiTryOnRepository - Handles AI try-on operations
 class AiTryOnRepository {
   final FirebaseStorage _storage;
   final FirebaseFirestore _firestore;
+  final ClothingRepository _clothingRepository;
+  final VirtualTryOnService _virtualTryOnService;
   
   AiTryOnRepository({
     FirebaseStorage? storage,
     FirebaseFirestore? firestore,
+    required ClothingRepository clothingRepository,
+    required VirtualTryOnService virtualTryOnService,
   })  : _storage = storage ?? FirebaseStorage.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _clothingRepository = clothingRepository,
+        _virtualTryOnService = virtualTryOnService;
   
   /// Upload user photo to Firebase Storage
   Future<String> uploadUserPhoto(File imageFile, String userId) async {
@@ -29,41 +40,62 @@ class AiTryOnRepository {
     }
   }
   
-  /// Process virtual try-on (Mock implementation - Replace with actual AI API)
+  /// Process virtual try-on (calls AI service and persists result)
   Future<TryOnResultModel> tryOnClothing({
     required String userId,
     required String userPhotoUrl,
     required String clothingItemId,
   }) async {
     try {
-      // Simulate AI processing delay
-      await Future.delayed(const Duration(seconds: 3));
-      
-      // MOCK: In production, this would call an AI API like HuggingFace, DeepFashion2, etc.
-      // For now, we'll just return the user photo as the result
-      // You would replace this with actual API call:
-      // final response = await dio.post('https://api.ai-service.com/try-on', data: {...});
-      
+      final ClothingItemModel? clothing =
+          await _clothingRepository.getClothingById(clothingItemId);
+      if (clothing == null) {
+        throw Exception('Clothing item not found');
+      }
+
+      final base64Image = await _virtualTryOnService
+          .generateTryOn(userPhotoUrl, clothing.imageUrl);
+
+      if (base64Image == null || base64Image.isEmpty) {
+        final msg = _virtualTryOnService.lastError ?? 'Unknown error';
+        throw Exception('Failed to generate try-on: $msg');
+      }
+
+      final bytes = _decodeBase64ToBytes(base64Image);
+      final downloadUrl = await _uploadGeneratedImage(bytes, userId);
+
       final result = TryOnResultModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         userId: userId,
         userPhotoUrl: userPhotoUrl,
         clothingItemId: clothingItemId,
-        resultImageUrl: userPhotoUrl, // Mock: using same photo as result
+        resultImageUrl: downloadUrl,
         createdAt: DateTime.now(),
         isSaved: false,
       );
-      
-      // Save result to Firestore
+
       await _firestore
           .collection('try_on_results')
           .doc(result.id)
           .set(result.toJson());
-      
+
       return result;
     } catch (e) {
       throw Exception('Failed to process try-on: $e');
     }
+  }
+
+  Uint8List _decodeBase64ToBytes(String data) {
+    final clean = data.contains(',') ? data.split(',').last : data;
+    return base64Decode(clean);
+  }
+
+  Future<String> _uploadGeneratedImage(Uint8List bytes, String userId) async {
+    final fileName =
+        'generated_results/${userId}_${DateTime.now().millisecondsSinceEpoch}.png';
+    final ref = _storage.ref().child(fileName);
+    await ref.putData(bytes, SettableMetadata(contentType: 'image/png'));
+    return await ref.getDownloadURL();
   }
   
   /// Get user's try-on history

@@ -24,3 +24,7 @@
 *.jks
 *.keystore
 keystore.properties
+
+# Environment files (do not commit secrets)
+.env
+.env.*

@@ -25,14 +25,35 @@ class AuthRepository {
     required String password,
   }) async {
     try {
+      final sanitizedEmail = email.trim();
+      final sanitizedPassword = password.trim();
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+        email: sanitizedEmail,
+        password: sanitizedPassword,
       );
       
-      return await _getUserData(userCredential.user!.uid);
+      final user = userCredential.user!;
+      // Ensure Firestore user document exists; create minimal one if missing
+      final userDocRef = _firestore.collection('users').doc(user.uid);
+      final userDoc = await userDocRef.get();
+      if (!userDoc.exists) {
+        final userModel = UserModel(
+          uid: user.uid,
+          email: user.email!,
+          displayName: user.displayName,
+          photoUrl: user.photoURL,
+          createdAt: DateTime.now(),
+        );
+        await userDocRef.set(userModel.toJson());
+        return userModel;
+      }
+      
+      return UserModel.fromJson(userDoc.data()!);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    } catch (e) {
+      // Surface non-auth exceptions (e.g., Firestore/user document issues)
+      throw Exception('Failed to sign in: $e');
     }
   }
   
@@ -43,9 +64,11 @@ class AuthRepository {
     String? displayName,
   }) async {
     try {
+      final sanitizedEmail = email.trim();
+      final sanitizedPassword = password.trim();
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
+        email: sanitizedEmail,
+        password: sanitizedPassword,
       );
       
       final user = userCredential.user!;
@@ -155,8 +178,22 @@ class AuthRepository {
         return 'This account has been disabled.';
       case 'too-many-requests':
         return 'Too many attempts. Please try again later.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'network-request-failed':
+        return 'Network error. Check your internet connection and try again.';
+      case 'operation-not-allowed':
+        return 'Email/password sign-in is disabled for this project. Enable it in Firebase Console.';
+      case 'invalid-api-key':
+        return 'Invalid Firebase API key. Verify your configuration.';
+      case 'app-not-authorized':
+        return 'App is not authorized to use Firebase Authentication for this project.';
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with a different sign-in method for this email.';
+      case 'internal-error':
+        return 'An internal error occurred. Please try again.';
       default:
-        return 'Authentication failed. Please try again.';
+        return 'Authentication failed (${e.code}). ${e.message ?? 'Please try again.'}';
     }
   }
 }

@@ -18,10 +18,13 @@ import 'presentation/views/splash_screen.dart';
 import 'presentation/views/auth/login_screen.dart';
 import 'presentation/views/auth/register_screen.dart';
 import 'presentation/views/home/home_screen.dart';
+import 'presentation/views/auth/forgot_password_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Main entry point of TryWear AI application
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   
   // Initialize Firebase
   await Firebase.initializeApp(
@@ -97,6 +100,7 @@ class TryWearApp extends StatelessWidget {
               '/login': (context) => const LoginScreen(),
               '/register': (context) => const RegisterScreen(),
               '/home': (context) => const HomeScreen(),
+              '/forgot-password': (context) => const ForgotPasswordScreen(),
             },
           );
         },
