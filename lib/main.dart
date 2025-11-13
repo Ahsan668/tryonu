@@ -20,6 +20,9 @@ import 'presentation/views/auth/register_screen.dart';
 import 'presentation/views/home/home_screen.dart';
 import 'presentation/views/auth/forgot_password_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'presentation/views/explore/explore_screen.dart';
+import 'data/models/clothing_item_model.dart';
+import 'presentation/views/explore/clothing_detail_screen.dart';
 
 /// Main entry point of TryWear AI application
 void main() async {
@@ -101,6 +104,12 @@ class TryWearApp extends StatelessWidget {
               '/register': (context) => const RegisterScreen(),
               '/home': (context) => const HomeScreen(),
               '/forgot-password': (context) => const ForgotPasswordScreen(),
+              '/explore': (context) => const ExploreScreen(),
+              '/clothing-detail': (context) {
+                final args = ModalRoute.of(context)!.settings.arguments;
+                final item = args is ClothingItemModel ? args : null;
+                return ClothingDetailScreen(item: item);
+              },
             },
           );
         },
